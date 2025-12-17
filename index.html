@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poster Damage Generator - ポスターダメージジェネレーター</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Poster Damage Generator</h1>
+            <p class="subtitle">ポスターダメージジェネレーター</p>
+        </header>
+
+        <main>
+            <div class="workspace">
+                <div class="canvas-container">
+                    <canvas id="mainCanvas"></canvas>
+                </div>
+            </div>
+
+            <aside class="control-panel">
+                <section class="control-section">
+                    <h2>画像アップロード</h2>
+                    <div class="upload-zone" id="uploadZone">
+                        <input type="file" id="imageInput" multiple accept="image/*">
+                        <label for="imageInput">
+                            <span class="upload-icon">📁</span>
+                            <span>画像をドロップ または クリック</span>
+                        </label>
+                    </div>
+                    <div class="uploaded-images" id="uploadedImages"></div>
+                </section>
+
+                <section class="control-section">
+                    <h2>キャンバス設定</h2>
+                    <div class="control-group">
+                        <label>幅: <span id="canvasWidthValue">1200</span>px</label>
+                        <input type="range" id="canvasWidth" min="400" max="2000" value="1200">
+                    </div>
+                    <div class="control-group">
+                        <label>高さ: <span id="canvasHeightValue">800</span>px</label>
+                        <input type="range" id="canvasHeight" min="400" max="2000" value="800">
+                    </div>
+                </section>
+
+                <section class="control-section">
+                    <h2>ダメージエフェクト</h2>
+
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" id="enableTear" checked>
+                            破れ効果
+                        </label>
+                        <input type="range" id="tearIntensity" min="0" max="100" value="50">
+                    </div>
+
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" id="enableWrinkle" checked>
+                            シワ効果
+                        </label>
+                        <input type="range" id="wrinkleIntensity" min="0" max="100" value="40">
+                    </div>
+
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" id="enableStain" checked>
+                            シミ・汚れ
+                        </label>
+                        <input type="range" id="stainIntensity" min="0" max="100" value="30">
+                    </div>
+
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" id="enableFade" checked>
+                            色あせ
+                        </label>
+                        <input type="range" id="fadeIntensity" min="0" max="100" value="25">
+                    </div>
+
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" id="enablePeeling" checked>
+                            剥がれ効果
+                        </label>
+                        <input type="range" id="peelingIntensity" min="0" max="100" value="35">
+                    </div>
+
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" id="enableWeather" checked>
+                            風化・経年劣化
+                        </label>
+                        <input type="range" id="weatherIntensity" min="0" max="100" value="20">
+                    </div>
+                </section>
+
+                <section class="control-section">
+                    <h2>背景設定</h2>
+                    <div class="control-group">
+                        <label>壁テクスチャ</label>
+                        <select id="wallTexture">
+                            <option value="concrete">コンクリート</option>
+                            <option value="brick">レンガ</option>
+                            <option value="metal">金属</option>
+                            <option value="wood">木目</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>壁の汚れ: <span id="wallDirtValue">50</span>%</label>
+                        <input type="range" id="wallDirt" min="0" max="100" value="50">
+                    </div>
+                </section>
+
+                <section class="control-section">
+                    <h2>レイアウト</h2>
+                    <div class="control-group">
+                        <label>ポスター重なり: <span id="overlapValue">30</span>%</label>
+                        <input type="range" id="overlap" min="0" max="80" value="30">
+                    </div>
+                    <div class="control-group">
+                        <label>ランダム回転: <span id="rotationValue">15</span>°</label>
+                        <input type="range" id="rotation" min="0" max="45" value="15">
+                    </div>
+                    <button id="shuffleLayout" class="btn btn-secondary">配置をシャッフル</button>
+                </section>
+
+                <section class="control-section actions">
+                    <button id="generateBtn" class="btn btn-primary">生成する</button>
+                    <button id="downloadBtn" class="btn btn-success">ダウンロード</button>
+                    <button id="clearBtn" class="btn btn-danger">クリア</button>
+                </section>
+            </aside>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
