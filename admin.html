@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>テクスチャ管理 - Poster Damage Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .texture-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .texture-category {
+            background: var(--panel-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .texture-category h2 {
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .texture-category p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .texture-upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .texture-upload-zone:hover,
+        .texture-upload-zone.dragover {
+            border-color: var(--accent-color);
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .texture-upload-zone input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .texture-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .texture-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+            background: #333;
+        }
+
+        .texture-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .texture-item .delete-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 20px;
+            height: 20px;
+            background: var(--danger-color);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .texture-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .texture-item.checkerboard {
+            background: repeating-conic-gradient(#444 0% 25%, #333 0% 50%) 50% / 20px 20px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--accent-color);
+            text-decoration: none;
+            margin-bottom: 1rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .info-box {
+            background: rgba(52, 152, 219, 0.1);
+            border: 1px solid var(--accent-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .info-box h3 {
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .info-box ul {
+            margin: 0;
+            padding-left: 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .info-box li {
+            margin-bottom: 0.25rem;
+        }
+
+        .clear-all-btn {
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .texture-count {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <a href="index.html" class="back-link">← ジェネレーターに戻る</a>
+
+        <header>
+            <h1>テクスチャ管理</h1>
+            <p class="subtitle">破れ・シミ・壁などのテクスチャをアップロード</p>
+        </header>
+
+        <div class="info-box">
+            <h3>テクスチャの準備について</h3>
+            <ul>
+                <li><strong>破れマスク:</strong> PNG形式、透明背景。白い部分が残り、透明部分が破れとして切り抜かれます</li>
+                <li><strong>シミ・汚れ:</strong> PNG形式、透明背景。オーバーレイとして重ねられます</li>
+                <li><strong>シワ・折り目:</strong> PNG形式。紙のシワや折り目のパターン</li>
+                <li><strong>壁テクスチャ:</strong> JPG/PNG形式。背景として使用されます（タイル状に敷き詰め）</li>
+            </ul>
+        </div>
+
+        <div class="texture-categories">
+            <div class="texture-category">
+                <h2>破れマスク</h2>
+                <p>ポスターの破れ形状を定義するマスク画像</p>
+                <div class="texture-upload-zone" data-category="tear">
+                    <input type="file" multiple accept="image/*">
+                    <span>画像をドロップ または クリック</span>
+                </div>
+                <div class="texture-list" id="tearList"></div>
+                <div class="texture-count" id="tearCount">0 枚</div>
+                <button class="clear-all-btn" data-category="tear">すべて削除</button>
+            </div>
+
+            <div class="texture-category">
+                <h2>シミ・汚れ</h2>
+                <p>コーヒー染み、水跡、汚れなどのテクスチャ</p>
+                <div class="texture-upload-zone" data-category="stain">
+                    <input type="file" multiple accept="image/*">
+                    <span>画像をドロップ または クリック</span>
+                </div>
+                <div class="texture-list" id="stainList"></div>
+                <div class="texture-count" id="stainCount">0 枚</div>
+                <button class="clear-all-btn" data-category="stain">すべて削除</button>
+            </div>
+
+            <div class="texture-category">
+                <h2>シワ・折り目</h2>
+                <p>紙のシワや折り目のオーバーレイ</p>
+                <div class="texture-upload-zone" data-category="wrinkle">
+                    <input type="file" multiple accept="image/*">
+                    <span>画像をドロップ または クリック</span>
+                </div>
+                <div class="texture-list" id="wrinkleList"></div>
+                <div class="texture-count" id="wrinkleCount">0 枚</div>
+                <button class="clear-all-btn" data-category="wrinkle">すべて削除</button>
+            </div>
+
+            <div class="texture-category">
+                <h2>壁テクスチャ</h2>
+                <p>コンクリート、レンガなどの背景テクスチャ</p>
+                <div class="texture-upload-zone" data-category="wall">
+                    <input type="file" multiple accept="image/*">
+                    <span>画像をドロップ または クリック</span>
+                </div>
+                <div class="texture-list" id="wallList"></div>
+                <div class="texture-count" id="wallCount">0 枚</div>
+                <button class="clear-all-btn" data-category="wall">すべて削除</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="texture-manager.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const manager = new TextureManager();
+
+            // Setup upload zones
+            document.querySelectorAll('.texture-upload-zone').forEach(zone => {
+                const category = zone.dataset.category;
+                const input = zone.querySelector('input');
+
+                input.addEventListener('change', (e) => {
+                    manager.addTextures(category, e.target.files);
+                    renderCategory(category);
+                });
+
+                zone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    zone.classList.add('dragover');
+                });
+
+                zone.addEventListener('dragleave', () => {
+                    zone.classList.remove('dragover');
+                });
+
+                zone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    zone.classList.remove('dragover');
+                    manager.addTextures(category, e.dataTransfer.files);
+                    renderCategory(category);
+                });
+            });
+
+            // Setup clear buttons
+            document.querySelectorAll('.clear-all-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const category = btn.dataset.category;
+                    if (confirm(`${category}のテクスチャをすべて削除しますか？`)) {
+                        manager.clearCategory(category);
+                        renderCategory(category);
+                    }
+                });
+            });
+
+            function renderCategory(category) {
+                const list = document.getElementById(`${category}List`);
+                const count = document.getElementById(`${category}Count`);
+                const textures = manager.getTextures(category);
+
+                list.innerHTML = '';
+                textures.forEach((tex, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'texture-item checkerboard';
+                    item.innerHTML = `
+                        <img src="${tex}" alt="texture">
+                        <button class="delete-btn" data-index="${index}">&times;</button>
+                    `;
+                    item.querySelector('.delete-btn').addEventListener('click', () => {
+                        manager.removeTexture(category, index);
+                        renderCategory(category);
+                    });
+                    list.appendChild(item);
+                });
+
+                count.textContent = `${textures.length} 枚`;
+            }
+
+            // Initial render
+            ['tear', 'stain', 'wrinkle', 'wall'].forEach(renderCategory);
+        });
+    </script>
+</body>
+</html>

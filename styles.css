@@ -49,6 +49,22 @@ header .subtitle {
     margin-top: 0.25rem;
 }
 
+header .admin-link {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.4rem 1rem;
+    background: var(--accent-color);
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+}
+
+header .admin-link:hover {
+    background: #2980b9;
+}
+
 main {
     display: flex;
     flex: 1;
