@@ -405,42 +405,108 @@ class PosterDamageGenerator {
     }
 
     addTornEdgeHighlight(ctx, maskCanvas, padding, intensity) {
-        // Create edge detection for torn paper effect
         const maskCtx = maskCanvas.getContext('2d');
         const imageData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
         const data = imageData.data;
+        const w = maskCanvas.width;
+        const h = maskCanvas.height;
 
-        // Find edges (where alpha changes significantly)
-        const edgeCanvas = document.createElement('canvas');
-        edgeCanvas.width = maskCanvas.width;
-        edgeCanvas.height = maskCanvas.height;
-        const edgeCtx = edgeCanvas.getContext('2d');
-
-        edgeCtx.strokeStyle = `rgba(255, 250, 240, ${0.5 * intensity})`;
-        edgeCtx.lineWidth = 2;
-
-        // Simple edge detection
-        for (let y = 1; y < maskCanvas.height - 1; y++) {
-            for (let x = 1; x < maskCanvas.width - 1; x++) {
-                const idx = (y * maskCanvas.width + x) * 4;
+        // Collect edge points
+        const edgePoints = [];
+        for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+                const idx = (y * w + x) * 4;
                 const alpha = data[idx + 3];
 
                 if (alpha > 128) {
-                    // Check neighbors
                     const neighbors = [
-                        data[((y - 1) * maskCanvas.width + x) * 4 + 3],
-                        data[((y + 1) * maskCanvas.width + x) * 4 + 3],
-                        data[(y * maskCanvas.width + x - 1) * 4 + 3],
-                        data[(y * maskCanvas.width + x + 1) * 4 + 3]
+                        data[((y - 1) * w + x) * 4 + 3],
+                        data[((y + 1) * w + x) * 4 + 3],
+                        data[(y * w + x - 1) * 4 + 3],
+                        data[(y * w + x + 1) * 4 + 3]
                     ];
 
                     if (neighbors.some(n => n < 128)) {
-                        edgeCtx.fillStyle = `rgba(255, 250, 240, ${Math.random() * 0.3 * intensity})`;
-                        edgeCtx.fillRect(x, y, 2, 2);
+                        // Calculate edge direction
+                        const dx = (data[(y * w + x + 1) * 4 + 3] || 0) - (data[(y * w + x - 1) * 4 + 3] || 0);
+                        const dy = (data[((y + 1) * w + x) * 4 + 3] || 0) - (data[((y - 1) * w + x) * 4 + 3] || 0);
+                        edgePoints.push({ x, y, dx, dy });
                     }
                 }
             }
         }
+
+        // Create edge canvas for torn paper effect
+        const edgeCanvas = document.createElement('canvas');
+        edgeCanvas.width = w;
+        edgeCanvas.height = h;
+        const edgeCtx = edgeCanvas.getContext('2d');
+
+        // Layer 1: Dark shadow (for depth)
+        edgeCtx.save();
+        for (const point of edgePoints) {
+            if (Math.random() > 0.3) continue;
+            const len = Math.sqrt(point.dx * point.dx + point.dy * point.dy) || 1;
+            const nx = -point.dy / len;
+            const ny = point.dx / len;
+
+            edgeCtx.fillStyle = `rgba(80, 70, 60, ${0.3 + Math.random() * 0.3})`;
+            edgeCtx.beginPath();
+            edgeCtx.arc(point.x + nx * 2, point.y + ny * 2, 1 + Math.random() * 2, 0, Math.PI * 2);
+            edgeCtx.fill();
+        }
+        edgeCtx.restore();
+
+        // Layer 2: Main white torn edge (paper fiber)
+        edgeCtx.save();
+        for (const point of edgePoints) {
+            const len = Math.sqrt(point.dx * point.dx + point.dy * point.dy) || 1;
+            const nx = -point.dy / len;
+            const ny = point.dx / len;
+
+            // Base white edge
+            const baseAlpha = 0.7 + Math.random() * 0.3;
+            edgeCtx.fillStyle = `rgba(255, 252, 245, ${baseAlpha})`;
+            edgeCtx.fillRect(point.x, point.y, 2, 2);
+
+            // Paper fiber strands extending outward
+            if (Math.random() < 0.4 * intensity) {
+                const fiberLen = 2 + Math.random() * 6 * intensity;
+                const fiberAngle = Math.atan2(ny, nx) + (Math.random() - 0.5) * 0.8;
+
+                edgeCtx.strokeStyle = `rgba(255, 250, 240, ${0.5 + Math.random() * 0.4})`;
+                edgeCtx.lineWidth = 0.5 + Math.random() * 1.5;
+                edgeCtx.beginPath();
+                edgeCtx.moveTo(point.x, point.y);
+                edgeCtx.lineTo(
+                    point.x + Math.cos(fiberAngle) * fiberLen,
+                    point.y + Math.sin(fiberAngle) * fiberLen
+                );
+                edgeCtx.stroke();
+            }
+
+            // Fuzzy fiber texture
+            if (Math.random() < 0.25) {
+                for (let f = 0; f < 3; f++) {
+                    const fx = point.x + (Math.random() - 0.5) * 4;
+                    const fy = point.y + (Math.random() - 0.5) * 4;
+                    edgeCtx.fillStyle = `rgba(255, 248, 235, ${0.3 + Math.random() * 0.4})`;
+                    edgeCtx.beginPath();
+                    edgeCtx.arc(fx, fy, 0.5 + Math.random() * 1, 0, Math.PI * 2);
+                    edgeCtx.fill();
+                }
+            }
+        }
+        edgeCtx.restore();
+
+        // Layer 3: Highlight on the torn edge (for 3D effect)
+        edgeCtx.save();
+        for (const point of edgePoints) {
+            if (Math.random() > 0.15) continue;
+            edgeCtx.fillStyle = `rgba(255, 255, 255, ${0.6 + Math.random() * 0.4})`;
+            edgeCtx.fillRect(point.x - 1, point.y - 1, 3, 3);
+        }
+        edgeCtx.restore();
 
         ctx.drawImage(edgeCanvas, 0, 0);
     }
